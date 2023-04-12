@@ -3,7 +3,7 @@ import os
 import glob
 
 # Set the directory containing the text files
-dir_path = '/home/yhsharaf/Desktop/ML703/TestingWater'
+dir_path = '/home/yhsharaf/Desktop/MBZUAI-ML703/TestingWater'
 
 # Get a list of all the text files in the directory
 txt_files = glob.glob(os.path.join(dir_path, '*.txt'))
@@ -38,15 +38,15 @@ for file_path in txt_files:
     # print("Roll:  radians",np.radians(roll))
     # print("Yaw:   radians",np.radians(yaw))
 
-    pitch = np.radians(pitch)
-    roll = np.radians(roll)
-    yaw = np.radians(yaw)
+    pitch = np.degrees(pitch)
+    roll = np.degrees(roll)
+    yaw = np.degrees(yaw)
 
-    pitch_roll_yaw = pitch,roll,yaw
-    # print(pitch_roll_yaw)
+    pitch_roll_yaw = str(pitch) + ',' + str(roll) + ',' + str(yaw)
 
+    # print(pitch_roll_yaw) 
     # Append the matrix to the end of the file
     with open(file_path, 'a') as file:
         file.write('\n')
-        np.savetxt(file, pitch_roll_yaw)
+        file.write(pitch_roll_yaw)
 
