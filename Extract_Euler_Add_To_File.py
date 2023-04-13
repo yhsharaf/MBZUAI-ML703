@@ -48,5 +48,5 @@ for file_path in txt_files:
     # Append the matrix to the end of the file
     with open(file_path, 'a') as file:
         file.write('\n')
-        file.write(pitch_roll_yaw)
+        file.write('XYZ: '+pitch_roll_yaw)
 
