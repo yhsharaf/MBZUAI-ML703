@@ -1,64 +1,108 @@
+# New
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-import os
+
+# replace with the path to your folder
+path = "/home/yhsharaf/Desktop/MBZUAI-ML703/BIWISubset"
+txt_files = [f for f in os.listdir(path) if f.endswith('.txt')]
+
+sort_array = []
+
+for txt_file in txt_files:
+    sort_array.append(txt_file)
+
+sort_array.sort()
 
 # Set the path to the folder containing the text files
-folder_path = "/home/yhsharaf/Desktop/MBZUAI-ML703/TestingWater"
+folder_path = "/home/yhsharaf/Desktop/MBZUAI-ML703/BIWISubset/"
 
-#Empty array
+# Empty array
 empty_array = []
-
+i = 0
 # Loop over each file in the folder
-for filename in os.listdir(folder_path):
-    # Check if the file is a text file
-    if filename.endswith(".txt"):
-        # Open the file in read mode
-        with open(os.path.join(folder_path, filename), "r") as f:
-            # Read the last three lines of the file
-            lines = f.readlines()[-1:]
+for i in range(len(sort_array)):
+    file_path = os.path.join(folder_path, sort_array[i])
+    with open(file_path, "r") as f:
 
-            # Extract the x, y, and z values from the lines
-            for line in lines:
-                values = line.strip().split(",")
-                x = float(values[0])
-                y = float(values[1])
-                z = float(values[2])
-                # print(f"x: {x}, y: {y}, z: {z}")
+        # Read the last three lines of the file
+        lines = f.readlines()
 
-            # Store the values in an array and print the array
-            empty_array.append([x,y,z])
-print(empty_array)
+        for i, line in enumerate(lines):
+            if "XYZ:" in line:
+                xyz_index = i
+                break
 
-#Normalize the array
+        next_line = lines[xyz_index].strip()
+        # get the line after "XYZ:" and remove any leading/trailing whitespace
+        next_line = next_line.replace("XYZ: ", "").split(",")
+        # print(next_line)
+        x = float(next_line[0])
+        y = float(next_line[1])
+        z = float(next_line[2])
+        # print(f"x: {x}, y: {y}, z: {z}")
+
+        # Store the values in an array and print the array
+        empty_array.append([x, y, z])
+        i = 1
+# print(empty_array)
+
+# Normalize The Values
 X = np.array(empty_array)
 min_val = X.min()
 max_val = X.max()
 normalized_array = (X - min_val) / (max_val - min_val)
-print(normalized_array)
+# print(normalized_array)
 
-#Make X the normalized array to fit in the data later
 X = normalized_array
 
 # Fit a KMeans model
-model = KMeans(n_clusters=4, random_state=42)
-model.fit(X)
+n_clusters = [1, 2, 4, 6, 8, 10, 12]
+for i in range(0, len(n_clusters)):
+    model = KMeans(n_clusters[i], random_state=42)
+    model.fit(X)
 
-# Plot the clusters in 3D
-fig = plt.figure()
-ax = fig.add_subplot(projection='3d')
-ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=model.labels_, s=100,marker='o', edgecolor='black')
-# Set the plot limits and labels
-ax.set_xlim(0,1)
-ax.set_ylim(0,1)
-ax.set_zlim(0,1)
-ax.set_xlabel('X axis')
-ax.set_ylabel('Y axis')
-ax.set_zlabel('Z axis')
-# ax.scatter(-10, 0, 10, s=100, c='r', marker='o')
-# Set the viewing angle
-# ax.view_init(elev=30, azim=45)
-ax.view_init(elev=45, azim=180+45)
+    # # Define colors for each cluster
+    # colors = ['gold',
+    # 'orange',
+    # 'orangered',
+    # 'greenyellow',
+    # 'turquoise',
+    # 'cyan',
+    # 'dodgerblue',
+    # 'blue',
+    # 'blueviolet',
+    # 'fuchsia',
+    # 'deeppink',
+    # 'crimson']
 
-plt.show()
+    # # Plot the clusters in 3D with specific colors
+    # fig = plt.figure()
+    # ax = fig.add_subplot(projection='3d')
+    # for i in range(len(X)):
+    #     ax.scatter(X[i, 0], X[i, 1], X[i, 2], c=colors[model.labels_[i]], s=50,marker='.')
+    # # Set the plot limits and labels
+    # ax.set_xlim([0, 1])
+    # ax.set_ylim([0, 1])
+    # ax.set_zlim([0, 1])
+    # ax.set_xlabel('X axis')
+    # ax.set_ylabel('Y axis')
+    # ax.set_zlabel('Z axis')
+    # # Set the viewing angle
+    # ax.view_init(elev=45, azim=180+45)
 
+    # plt.show()
+
+    label = model.predict(normalized_array)  # predicted cluster label
+    # print(label)
+    # print("New data point belongs to cluster:", label)
+
+    # Save File
+    for j in range(len(sort_array)):
+        file_path = os.path.join(folder_path, sort_array[j])
+        with open(file_path, "a") as f:
+            f.write('\n')
+            f.write(str(n_clusters[i]) + '-KMeans-Cluster: ' + str(label[j]))
+            f.write('\n')
+            # print(label[i])
