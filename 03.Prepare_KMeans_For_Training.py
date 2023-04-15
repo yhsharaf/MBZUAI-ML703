@@ -28,6 +28,9 @@ def getClusterSize(value, number_of_clusters, empty_list):
         return empty_list
 
 
+# setting a fixed seed for np
+np.random.seed(42)
+
 # replace with the path to your folder
 path = "./BIWISubset/"
 txt_files = [f for f in os.listdir(path) if f.endswith('.txt')]
