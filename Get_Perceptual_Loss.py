@@ -1,16 +1,15 @@
-import tensorflow as tf
-import statistics
-from tensorflow.keras.applications.vgg16 import VGG16
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.applications.vgg16 import preprocess_input
+import lpips
 import numpy as np
+import torch
+from PIL import Image
 import os
+import statistics
+
+# Loaded pretrained model
+loss_fn = lpips.LPIPS(net='vgg')
 
 # Empty array to store perceptual losses
 perceptual_loss_array = []
-
-# Load the pre-trained VGG16 model
-model = VGG16(weights='imagenet', include_top=False)
 
 # Define a list of image file extensions
 img_extensions = ['.jpg', '.jpeg', '.png', '.bmp']
@@ -19,7 +18,7 @@ img_extensions = ['.jpg', '.jpeg', '.png', '.bmp']
 src_folder_path = "/home/yhsharaf/Desktop/MBZUAI-ML703/BiwiDataset/faces_0/01"
 dst_folder_path = "/home/yhsharaf/Desktop/MBZUAI-ML703/BiwiDataset/faces_0/01"
 # dst_folder_path = src_folder_path+"/merged"
-
+j=0
 # Get a list of all the image filenames in each folder
 src_imgs = [f for f in os.listdir(src_folder_path) if os.path.splitext(f)[
     1].lower() in img_extensions]
@@ -31,26 +30,18 @@ for i in range(len(src_imgs)):
     src_img = os.path.join(src_folder_path, src_imgs[i])
     dst_img = os.path.join(dst_folder_path, dst_imgs[i])
 
-    # Load the images to compare
-    src_img_load = image.load_img(src_img, target_size=(224, 224))
-    dst_img_load = image.load_img(dst_img, target_size=(224, 224))
+    # Load image as a PIL Image object and convert it to a PyTorch tensor
+    src_img = Image.open(src_img)
+    tensor_src_img = torch.tensor(np.array(src_img)).permute(2, 0, 1).float().div(255).mul(2).sub(1)
 
-    # Convert the images to arrays
-    src_array = image.img_to_array(src_img_load)
-    dst_array = image.img_to_array(dst_img_load)
+    # Load image as a PIL Image object and convert it to a PyTorch tensor
+    dst_img = Image.open(dst_img)
+    tensor_dst_img = torch.tensor(np.array(dst_img)).permute(2, 0, 1).float().div(255).mul(2).sub(1)
 
-    # Preprocess the images for input to the VGG16 model
-    src_array = preprocess_input(src_array)
-    dst_array = preprocess_input(dst_array)
-
-    # Use the VGG16 model to extract feature maps from the images
-    features1 = model.predict(np.array([src_array]))
-    features2 = model.predict(np.array([dst_array]))
-
-    # Compute the mean squared error between the feature maps
-    mse = np.mean((features1 - features2) ** 2)
-    perceptual_loss = mse / 2.0
-    perceptual_loss_array.append(perceptual_loss)
+    # Calculate the LPIPS distance between the two images
+    d = loss_fn.forward(tensor_src_img, tensor_dst_img)
+    tensor_value = d[0][0][0][0].item()
+    perceptual_loss_array.append(tensor_value)
 
 with open('Perceptual_Loss_results.txt', 'w') as f:
     f.write("Perceptual_Loss_Mean: " +
