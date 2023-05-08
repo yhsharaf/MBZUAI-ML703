@@ -1,45 +1,59 @@
-from skimage.metrics import structural_similarity
+from skimage.metrics import structural_similarity as ssim
 import cv2
+import os
+import statistics
 import numpy as np
+from skimage import io
 
-before = cv2.imread('/home/yhsharaf/Desktop/MBZUAI-ML703/Clusters/KMeans/7/frame_00023_rgb.png')
-after = cv2.imread('/home/yhsharaf/Desktop/MBZUAI-ML703/Clusters/KMeans/7/frame_00062_rgb.png')
+# Empty array to store ssim score
+ssim_score_array = []
 
-# Convert images to grayscale
-before_gray = cv2.cvtColor(before, cv2.COLOR_BGR2GRAY)
-after_gray = cv2.cvtColor(after, cv2.COLOR_BGR2GRAY)
+# Define a list of image file extensions
+img_extensions = ['.jpg', '.jpeg', '.png', '.bmp']
 
-# Compute SSIM between two images
-(score, diff) = structural_similarity(before_gray, after_gray, full=True)
-print("Image similarity", score)
 
-# # The diff image contains the actual image differences between the two images
-# # and is represented as a floating point data type in the range [0,1] 
-# # so we must convert the array to 8-bit unsigned integers in the range
-# # [0,255] before we can use it with OpenCV
-# diff = (diff * 255).astype("uint8")
+# auto_array = ['05_To_04_W_To_W_All', '05_To_04_W_To_W_Cluster_1', '05_To_04_W_To_W_GMM_5', '05_To_04_W_To_W_GMM_7', '05_To_04_W_To_W_GMM_9', '05_To_04_W_To_W_GMM_11', '05_To_04_W_To_W_Kmeans_5', '05_To_04_W_To_W_Kmeans_7', '05_To_04_W_To_W_Kmeans_9', '05_To_04_W_To_W_Kmeans_11', '05_To_04_W_To_W_Right_Left', '05_To_04_W_To_W_Static', '05_To_04_W_To_W_Up_Down']
+auto_array = ['05_To_13_W_To_M_All', '05_To_13_W_To_M_Cluster_1', '05_To_13_W_To_M_GMM_5', '05_To_13_W_To_M_GMM_7', '05_To_13_W_To_M_GMM_9', '05_To_13_W_To_M_GMM_11', '05_To_13_W_To_M_Kmeans_5', '05_To_13_W_To_M_Kmeans_7', '05_To_13_W_To_M_Kmeans_9', '05_To_13_W_To_M_Kmeans_11', '05_To_13_W_To_M_Right_Left', '05_To_13_W_To_M_Static', '05_To_13_W_To_M_Up_Down' ]
+# auto_array = ['05_To_18_SW_To_SW_All', '05_To_18_SW_To_SW_Cluster_1', '05_To_18_SW_To_SW_GMM_5', '05_To_18_SW_To_SW_GMM_7', '05_To_18_SW_To_SW_GMM_9', '05_To_18_SW_To_SW_GMM_11', '05_To_18_SW_To_SW_Kmeans_5', '05_To_18_SW_To_SW_Kmeans_7', '05_To_18_SW_To_SW_Kmeans_9', '05_To_18_SW_To_SW_Kmeans_11', '05_To_18_SW_To_SW_Right_Left', '05_To_18_SW_To_SW_Static', '05_To_18_SW_To_SW_Up_Down']
+for i in range(0, len(auto_array)):
 
-# # Threshold the difference image, followed by finding contours to
-# # obtain the regions of the two input images that differ
-# thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-# contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-# contours = contours[0] if len(contours) == 2 else contours[1]
+    # Before src_folder_path to save text files in
+    before_src_path = "/home/youssef.sharaf/Desktop/DeepFaceLab/"+auto_array[i]
+    # Current src_folder_path to iterate
+    current_src_path = "/home/youssef.sharaf/Desktop/DeepFaceLab/"+auto_array[i]+"/07_Test"
+    # Define the paths to the folders containing the images
+    src_folder_path = current_src_path+"/merge_crop"
+    # dst_folder_path = "/home/youssef.sharaf/Desktop/DeepFaceLab/05_To_04_W_To_W_All/data_dst/merged"
+    dst_folder_path = "/home/youssef.sharaf/Desktop/MBZUAI-ML703/Test_Dataset/W_To_M/07_GT/data_dst/aligned_crop"
+    # Get a list of all the image filenames in each folder
+    src_imgs = [f for f in os.listdir(src_folder_path) if os.path.splitext(f)[
+        1].lower() in img_extensions]
+    dst_imgs = [f for f in os.listdir(dst_folder_path) if os.path.splitext(f)[
+        1].lower() in img_extensions]
+    for j in range(len(src_imgs)):
+        # Set the path to the folder containing the text files
+        src_img = os.path.join(src_folder_path, src_imgs[j])
+        dst_img = os.path.join(dst_folder_path, dst_imgs[j])
 
-# mask = np.zeros(before.shape, dtype='uint8')
-# filled_after = after.copy()
+        # Load the two input images
+        src_img_load = cv2.imread(src_img)
+        dst_img_load = cv2.imread(dst_img)
 
-# for c in contours:
-#     area = cv2.contourArea(c)
-#     if area > 40:
-#         x,y,w,h = cv2.boundingRect(c)
-#         cv2.rectangle(before, (x, y), (x + w, y + h), (36,255,12), 2)
-#         cv2.rectangle(after, (x, y), (x + w, y + h), (36,255,12), 2)
-#         cv2.drawContours(mask, [c], 0, (0,255,0), -1)
-#         cv2.drawContours(filled_after, [c], 0, (0,255,0), -1)
+        # Calculate SSIM
+        ssim_score = ssim(src_img_load, dst_img_load, multichannel=True,channel_axis=-1)
+        # print(ssim_score)
+        ssim_score_array.append(ssim_score)
 
-# cv2.imshow('before', before)
-# cv2.imshow('after', after)
-# cv2.imshow('diff',diff)
-# cv2.imshow('mask',mask)
-# cv2.imshow('filled after',filled_after)
-# cv2.waitKey(0)
+    ssim_score_array_np = np.array(ssim_score_array)
+    print(ssim_score_array_np.mean())
+    with open(before_src_path+'/SSIM_Score_results.txt', 'w') as f:
+        ssim_score_array_np = np.array(ssim_score_array)
+        f.write("SSIM_Score_Mean: " +
+                str(np.mean(ssim_score_array_np)))
+        print("SSIM_Score_Mean: " +
+                str(np.mean(ssim_score_array_np)))
+        f.write("\nSSIM_Score_Std: " +
+                str(np.std(ssim_score_array_np)))
+        print("SSIM_Score_Std: " +
+                str(np.std(ssim_score_array_np)))        
+        
